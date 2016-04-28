@@ -1,5 +1,6 @@
 import random
 import time
+import sys
 
 class Grafo:
 
@@ -16,6 +17,17 @@ class Grafo:
 		self.jaVisitados = {}
 		# Percorre o vetor "conexoes", criando o grafo a partir dele
 		for x in range(0, len(conexoes)):
+			for y in range(2):
+				self.adicionaVertice(conexoes[x][y])
+			self.conecta(conexoes[x][0], conexoes[x][1], conexoes[x][2])
+
+	# Construtor que usa o arquivo das ambulancias para gerar o grafo
+	def __init__(self, conexoes, length):
+		self.G = {}
+		# Usado na funcao procuraFechoTransitivo()
+		self.jaVisitados = {}
+		# Percorre o vetor "conexoes", criando o grafo a partir dele
+		for x in range(0, length):
 			for y in range(2):
 				self.adicionaVertice(conexoes[x][y])
 			self.conecta(conexoes[x][0], conexoes[x][1], conexoes[x][2])
@@ -117,6 +129,15 @@ class Grafo:
 		alcancaveis = self.fechoTransitivo(self.umVertice())
 		return self.equals(vertices, alcancaveis)
 
+	# Usado por eConexo(), verifica se duas listas possuem os mesmos elementos (iguais, porem nao
+	# necessariamente na mesma ordem)
+	def equals(self, conj1, conj2):
+		for x in conj1:
+			for y in conj2:
+				if x not in conj2 or y not in conj1:
+					return False
+		return True
+
 	# Verifica se o grafo e uma arvore, ou seja, se nao possue ciclos se e conexo
 	def eArvore(self):
 		v = self.umVertice()
@@ -133,6 +154,37 @@ class Grafo:
 					return True
 		jaVisitados.remove(v)
 		return False
+
+
+	def extendedFloyd(self):
+		vert = self.vertices()
+		ordem = self.ordem()
+		dist  = [[self.distance(vert[y], vert[x]) * random.uniform(1, 2) for x in range(ordem)] for y in range(ordem)]
+		nextV = [[self.vertex(vert[y], vert[x]) for x in range(ordem)] for y in range(ordem)]
+		for k in range(0, ordem):
+			for i in range(0, ordem):
+				for j in range(0, ordem):
+					if (dist[i][k] + dist[k][j]) < dist[i][j]:
+						dist[i][j] = dist[i][k] + dist[k][j]
+						nextV[i][j] = nextV[i][k]
+		return dist, nextV
+
+	def distance(self, v1, v2):
+		if v1 == v2:
+			return 0
+		for x in range(0, len(self.G[v1])):
+			if self.G[v1][x][0] == v2:
+				return self.G[v1][x][1]
+		return float("inf")
+
+	def vertex(self, v1, v2):
+		if v1 == v2:
+			return v1
+		for x in range(0, len(self.G[v1])):
+			if self.G[v1][x][0] == v2:
+				return self.G[v1][x][0]
+		return 'NULL'
+
 
 
 
@@ -170,25 +222,14 @@ class Grafo:
 				stack = stack + self.adjacentes(v)
 		return caminho
 
-	# Usado por eConexo(), verifica se duas listas possuem os mesmos elementos (iguais, porem nao
-	# necessariamente na mesma ordem)
-	def equals(self, conj1, conj2):
-		for x in conj1:
-			for y in conj2:
-				if x not in conj2 or y not in conj1:
-					return False
-		return True
+
+def carregarGrafo(arq):
+	exec open(arq).read()
+	length = len(arestas)
+	return Grafo(arestas, length-1), arestas[length-1][0], arestas[length-1][1]
 
 t1 = time.time()
 
-arq = open('grafo.dat')
-texto = arq.read()
-exec texto
-
-g = Grafo(conexoes)
-#g = Grafo()
-
-print g.G
 
 t2 = time.time()
 
