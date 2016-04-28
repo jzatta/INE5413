@@ -15,6 +15,9 @@ class Grafo:
 		self.G = {}
 		# Usado na funcao procuraFechoTransitivo()
 		self.jaVisitados = {}
+		self.hospital = []
+		self.dist  = []
+		self.nextV = []
 		# Percorre o vetor "conexoes", criando o grafo a partir dele
 		for x in range(0, len(conexoes)):
 			for y in range(2):
@@ -27,6 +30,9 @@ class Grafo:
 		# Usado na funcao procuraFechoTransitivo()
 		self.jaVisitados = {}
 		# Percorre o vetor "conexoes", criando o grafo a partir dele
+		self.hospital = []
+		self.hospital.append(conexoes[length][0])
+		self.hospital.append(conexoes[length][1])
 		for x in range(0, length):
 			for y in range(2):
 				self.adicionaVertice(conexoes[x][y])
@@ -159,15 +165,21 @@ class Grafo:
 	def extendedFloyd(self):
 		vert = self.vertices()
 		ordem = self.ordem()
-		dist  = [[self.distance(vert[y], vert[x]) * random.uniform(1, 2) for x in range(ordem)] for y in range(ordem)]
-		nextV = [[self.vertex(vert[y], vert[x]) for x in range(ordem)] for y in range(ordem)]
+		self.dist  = [[self.distance(vert[y], vert[x]) for x in range(ordem)] for y in range(ordem)]
+		self.nextV = [[self.vertex(vert[y], vert[x]) for x in range(ordem)] for y in range(ordem)]
 		for k in range(0, ordem):
 			for i in range(0, ordem):
 				for j in range(0, ordem):
-					if (dist[i][k] + dist[k][j]) < dist[i][j]:
-						dist[i][j] = dist[i][k] + dist[k][j]
-						nextV[i][j] = nextV[i][k]
-		return dist, nextV
+					if (self.dist[i][k] + self.dist[k][j]) < self.dist[i][j]:
+						self.dist[i][j] = self.dist[i][k] + self.dist[k][j]
+						self.nextV[i][j] = self.nextV[i][k]
+		return
+
+	def randPath(self):
+		for x in self.vertices():
+			for y in range(0, len(self.G[x])):
+				self.G[x][y][1] = self.G[x][y][1] * random.uniform(1, 1.5)
+		return
 
 	def distance(self, v1, v2):
 		if v1 == v2:
@@ -185,7 +197,12 @@ class Grafo:
 				return self.G[v1][x][0]
 		return 'NULL'
 
-
+	def getIndex(self, v1):
+		vert = self.vertices()
+		for x in range(0, len(vert)):
+			if vert[x] == v1:
+				return x
+		
 
 
 	# Encontra o menor caminho entre o nodo1 e nodo2
@@ -222,18 +239,46 @@ class Grafo:
 				stack = stack + self.adjacentes(v)
 		return caminho
 
+	def caminhoMinimoHospital(self, v):
+		distance = float('inf')
+		for x in range(len(self.hospital)):
+			if distance > self.dist[self.getIndex(self.hospital[x])][self.getIndex(v)]:
+				distance = self.dist[self.getIndex(self.hospital[x])][self.getIndex(v)]
+				hosp = self.getIndex(self.hospital[x])
+		path = self.getCaminho(hosp, v)
+		return distance, path
+			
+	def getCaminho(self, vA, vE):
+		path = [vA]
+		while (path[len(path)-1] != vE):
+			path.append(self.nextV[self.getIndex(path[len(path)-1])][self.getIndex(vE)])
+		return path
 
 def carregarGrafo(arq):
 	exec open(arq).read()
 	length = len(arestas)
-	return Grafo(arestas, length-1), arestas[length-1][0], arestas[length-1][1]
+	return Grafo(arestas, length-1)
 
-t1 = time.time()
-
-
-t2 = time.time()
-
-print(t2-t1)
+g = carregarGrafo('ambulan2.dat')
+while True:
+	print "insira o vertice da emergencia:"
+	print g.vertices()
+	inpt = input()
+	print ""
+	print ""
+	t1 = time.time()
+	g.randPath()
+	g.extendedFloyd()
+	distanciaX, caminhoX = g.caminhoMinimoHospital(inpt)
+	t2 = time.time()
+	print "Tempo:"
+	print(t2-t1)
+	print "Distancia:"
+	print distanciaX
+	print "Caminho:"
+	print caminhoX
+	print ""
+	print ""
 
 #g = Grafo()
 #g.adicionaVertice("A")
