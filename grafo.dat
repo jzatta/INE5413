@@ -1,0 +1,22 @@
+conexoes = [['A', 'B', 1], ['A', 'S', 2], ['S', 'G', 1], ['S', 'C', 2],
+               ['G', 'F', 3], ['G', 'H', 1],
+               ['C', 'F', 2], ['C', 'D', 1], ['C', 'E', 2],
+               ['E', 'H', 1]]
+
+#conexoes = [['A', 'B', 1], ['S', 'A', 1]]
+
+
+#print(g._grafo)
+#print("\n")
+#print("\n")
+
+#print(g.shortestPath('A','F'))
+#print(g.depthFirstSearch('A'))
+#print(g.breadthFirstSearch('A'))
+
+#print g._grafo.C
+
+#g.desconecta('A', 'B', 1)
+#g.removeVertice('A')
+
+#print g._grafo.C
