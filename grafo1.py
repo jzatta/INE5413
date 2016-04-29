@@ -7,17 +7,21 @@ class Grafo:
 	# Construtor padrao
 	def __init__(self):
 		self.G = {}
+
 		# Usado na funcao procuraFechoTransitivo()
 		self.jaVisitados = {}
 
 	# Construtor que usa o arquivo grafo.dat para gerar o grafo
 	def __init__(self, conexoes):
 		self.G = {}
+
 		# Usado na funcao procuraFechoTransitivo()
 		self.jaVisitados = {}
+
 		self.hospital = []
 		self.dist  = []
 		self.nextV = []
+
 		# Percorre o vetor "conexoes", criando o grafo a partir dele
 		for x in range(0, len(conexoes)):
 			for y in range(2):
@@ -27,12 +31,15 @@ class Grafo:
 	# Construtor que usa o arquivo das ambulancias para gerar o grafo
 	def __init__(self, conexoes, length):
 		self.G = {}
+
 		# Usado na funcao procuraFechoTransitivo()
 		self.jaVisitados = {}
-		# Percorre o vetor "conexoes", criando o grafo a partir dele
+
 		self.hospital = []
 		self.hospital.append(conexoes[length][0])
 		self.hospital.append(conexoes[length][1])
+
+		# Percorre o vetor "arestas", criando o grafo a partir dele
 		for x in range(0, length):
 			for y in range(2):
 				self.adicionaVertice(conexoes[x][y])
@@ -46,12 +53,13 @@ class Grafo:
 	# Remove um vertice, primeiro remove as "arestas" que contem esse nodo e
 	# depois apaga o nodo em si
 	def removeVertice(self, v):
-		#Remover arestas que chegam no vertice removido
+
+		#Remove arestas que chegam no vertice removido
 		for x in self.G.keys():
 			for y in range(0, len(self.G[x])):
 				if self.G[x][y][0] == v:
 					self.G[x].remove(self.G[x][y])
-		#Remover vertice
+		#Remove vertice
 		if self.G.has_key(v):
 			del self.G[v]
 
@@ -90,8 +98,6 @@ class Grafo:
 	# Retorna o numero de vertices adjacentes ao nodo no Grafo
 	def grau(self, v):
 		return len(self.G[v])
-
-
 
 	# Verifica se todos os vertices do grafo possuem o mesmo grau
 	def eRegular(self):
@@ -162,11 +168,20 @@ class Grafo:
 		return False
 
 
+	# Calcula todos os caminhos e distancias entre cada vertice, usando e atualizando
+	# as matrizes de roteamento e distancias. (Algoritmo de Floyd extendido)
 	def extendedFloyd(self):
 		vert = self.vertices()
 		ordem = self.ordem()
+
+		# Gera a matriz de distancias (inicial) a partir das informacoes do grafo
 		self.dist  = [[self.distance(vert[y], vert[x]) for x in range(ordem)] for y in range(ordem)]
+
+		# Gera a matriz de roteamento (inicial) a partir das informacoes do grafo
 		self.nextV = [[self.vertex(vert[y], vert[x]) for x in range(ordem)] for y in range(ordem)]
+
+		# Atualiza as matrizes de distancia e roteamento ate elas possuirem as distancias/rotas
+		# minimas de cada vertice para cada outro vertice
 		for k in range(0, ordem):
 			for i in range(0, ordem):
 				for j in range(0, ordem):
@@ -175,12 +190,15 @@ class Grafo:
 						self.nextV[i][j] = self.nextV[i][k]
 		return
 
+	# Gera pesos aleatorios para todas as arestas do grafo
 	def randPath(self):
 		for x in self.vertices():
 			for y in range(0, len(self.G[x])):
-				self.G[x][y][1] = self.G[x][y][1] * random.uniform(1, 1.5)
+				self.G[x][y][1] = self.G[x][y][1] * random.uniform(0.5, 1.5)
 		return
 
+	# Usado por extendedFloyd(). Busca a distancia entre dois vertices do grafo,
+	# para gerar matriz de distancia do Floyd extendido
 	def distance(self, v1, v2):
 		if v1 == v2:
 			return 0
@@ -189,6 +207,8 @@ class Grafo:
 				return self.G[v1][x][1]
 		return float("inf")
 
+	# Usada por extendedFloyd(). Retorna cada vertice adjacente a cada vertice
+	# do grafo. Usada para gerar a matriz de roteamento
 	def vertex(self, v1, v2):
 		if v1 == v2:
 			return v1
@@ -197,6 +217,8 @@ class Grafo:
 				return self.G[v1][x][0]
 		return 'NULL'
 
+	# Retorna o indice relativo ao vertice buscado no grafo
+	# (Usado pelo algoritmo de Floyd extendido)
 	def getIndex(self, v1):
 		vert = self.vertices()
 		for x in range(0, len(vert)):
@@ -239,6 +261,8 @@ class Grafo:
 				stack = stack + self.adjacentes(v)
 		return caminho
 
+	# Usa a matriz de distancias para determinar o hospital mais proximo da emergencia,
+	# e usa a matiz de rotas para determinar a rota desse caminho
 	def caminhoMinimoHospital(self, v):
 		distance = float('inf')
 		for x in range(len(self.hospital)):
@@ -247,32 +271,46 @@ class Grafo:
 				hosp = self.getIndex(self.hospital[x])
 		path = self.getCaminho(hosp, v)
 		return distance, path
-			
+
+	# Usada em caminhoMinimoHospital(). Usa a matriz de roteamento para obter o caminho do hospital mais proximo
+	# (ja obtido) ate a emergencia
 	def getCaminho(self, vA, vE):
 		path = [vA]
 		while (path[len(path)-1] != vE):
 			path.append(self.nextV[self.getIndex(path[len(path)-1])][self.getIndex(vE)])
 		return path
 
+# Gera o grafo a partir do arquivo .dat contendo as arestas
+# e os hospitais
 def carregarGrafo(arq):
 	exec open(arq).read()
 	length = len(arestas)
 	return Grafo(arestas, length-1)
 
-g = carregarGrafo('ambulan2.dat')
+# Inicializa o grafo, pede para o usuario informar o local da emergencia
+# e calcula as matrizes de roteamento e distancias (Floyd extendido).
+# A partir disso, mostra o tempo de execucao, rota mais curta
+# de um hospital ate a emergencia, e a distancia total da rota.
+g = carregarGrafo('ambulan2.dat') # Para trocar o .dat lido, basta substituir 'ambulan2.dat' aqui pelo novo .dat
+
+
 while True:
-	print "insira o vertice da emergencia:"
+	# Aleatoriza os pesos das arestas, com base nos pesos originais
+	#g.randPath()
+	
+	print "Insira o vertice da emergencia:"
 	print g.vertices()
 	inpt = input()
 	print ""
 	print ""
 	t1 = time.time()
-	g.randPath()
 	g.extendedFloyd()
 	distanciaX, caminhoX = g.caminhoMinimoHospital(inpt)
 	t2 = time.time()
 	print "Tempo:"
 	print(t2-t1)
+	print "Ambulancia mais proxima da emergencia:"
+	print caminhoX[0]
 	print "Distancia:"
 	print distanciaX
 	print "Caminho:"
@@ -280,28 +318,11 @@ while True:
 	print ""
 	print ""
 
-#g = Grafo()
-#g.adicionaVertice("A")
-#g.adicionaVertice("B")
-#g.conecta("A", "B", 10)
-#g.adicionaVertice("C")
-#g.conecta("B", "C", 2)
-#g.conecta("C", "A", 5)
-#print g.G
+# Nao e viavel usar Floyd-Warshall para resolver este problema. Ele funciona, porem, de forma ineficiente.
+# Isso porque ele gera todas as distancias e caminhos de todos os vertices para todos os outros (numero de vertices
+# ao quadrado de caminhos/distancias - O(n ao cubo), sendo que o problema somente exige as distancias entre cada hospital
+# e a emergencia (2 caminhos/distancias). Alem disso, existem algoritmos melhores para este caso,
+# como o de Dijkstra, o qual resolve o problema em um tempo muito menor (O(n*logn)).
 
 
-#print "Adjacentes ao vertice A: "
-#print g.adjacentes("A")
-#g.desconecta("A", "B", 10)
-#print g.G
-#print g.vertices()
-#print g.umVertice()
-#print g.grau("B")
-
-
-
-#print g.eRegular()
-#g.desconecta("A", "C", 5)
-#print g.G
-#print g.eRegular()
 
