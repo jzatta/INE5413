@@ -190,8 +190,14 @@ class Grafo:
 
 	# Usado por dijkstra(). Retorna um vetor ordenado com heapsort
 	def extrairMinimo(self, Q, origem):
-		return self.heapsort(origem, Q, len(Q) - 1)[0] # Ordena os vertices por distancia e retorna o mais proximo
+		self.heapsort(origem, Q, len(Q) - 1) # Ordena os vertices por distancia e retorna o mais proximo
+		self.swap(Q)
+		return Q[len(Q) - 1]
 
+	def swap(self, Q):
+		tmp = Q[len(Q) - 1]
+		Q[len(Q) - 1] = Q[0]
+		Q[0] = tmp
 
 
 
@@ -211,45 +217,38 @@ class Grafo:
 	def dijkstra(self, origem):
 		
 		adjacentes = self.adjacentes(origem) # Vertices cuja distancia e conhecida
-		print adjacentes #1
 		
 		d = {} # Distancias da origem ate cada vertice
+		caminhos = {} # Caminho entre de cada vertice para a origem
 
 		for i in range(0, self.ordem()):
-			#d[self.vertices()[i]] = self.pesoAresta(origem, self.vertices()[i])
 			d[self.vertices()[i]] = float('inf')
 		d[origem] = 0
+		caminhos[origem] = origem
 
-		print d
 		#S = adjacentes # Vertices cuja distancia minima e conhecida
 		S = []
-		print "Vertices com distancia conhecida: "
-		#S.append(origem)
-		print S #2
 
 		Q = list(set(self.vertices()) - set(S)) # Fila de prioridade composta por V (todos os vertices) - S
-		print "fila de prioridades dos vertices ainda sem peso nas arestas: "
-		print Q #3
-		### EXCLUIR origem DE Q????????????
 
+		# Itera enquanto ha elementos não visitados
 		while Q != [] :
 			u = self.extrairMinimo(Q, origem)
-			print "Minimo extraido (dos vertices ainda sem distancia calculada):"
-			print u #4
 			Q.remove(u)
 			S.append(u)
 			adjacentesU = self.adjacentes(u)
-			print "Adjacentes ao extraido: "
-			print adjacentesU #5
+			# Itera para todos os vertices adjacentes a u
 			for v in adjacentesU :
-				print 'adjacente escolhido'
-				print d[v]
+				# Pega peso da aresta entre os nodos u e v
 				pesoAresta = self.pesoAresta(u, v)
-				print d[u] + pesoAresta
+				# E compara com o menor caminho encontrado ate o momento
 				if d[v] > d[u] + pesoAresta:
+					# caso seja menor atualiza o valor
 					d[v] = d[u] + pesoAresta
-				print d[v]
-		return d
+					# E atualiza o caminho
+					caminhos[v] = u
+		# Retorna as distancias e os caminhos
+		return d, caminhos
 
 # Gera o grafo a partir do arquivo .dat contendo as arestas
 # e os hospitais
@@ -259,44 +258,21 @@ def carregarGrafo(arq):
 	return Grafo(arestas)
 
 
-g = carregarGrafo('grafo7.dat') # Para trocar o .dat lido, basta substituir 'grafo5.dat' aqui pelo novo .dat
-
-#print g.G
-
-#print g.vertices()
-
-
-d = g.dijkstra(2)
-print "As distancias entre o nodo 2 e os outros nodos e:"
-print d
-
-#random.shuffle(adjacentes)
-
-#adjacentes.sort()
-
-
-#while True:
-	# Aleatoriza os pesos das arestas, com base nos pesos originais
-	#g.randPath()
-	
-	#print "Insira o vertice da emergencia:"
-	#print g.vertices()
-	#inpt = input()
-	#print ""
-	#print ""
-	#t1 = time.time()
-	#g.extendedFloyd()
-	#distanciaX, caminhoX = g.caminhoMinimoHospital(inpt)
-	#t2 = time.time()
-	#print "Tempo:"
-	#print(t2-t1)
-	#print "Ambulancia mais proxima da emergencia:"
-	#print caminhoX[0]
-	#print "Distancia:"
-	#print distanciaX
-	#print "Caminho:"
-	#print caminhoX
-	#print ""
-	#print ""
-
+arqGrafos = ['grafo5.dat', 'grafo20.dat', 'grafo50.dat', 'grafo100.dat', 'grafo200.dat', 'grafo500.dat']
+for arquivo in arqGrafos:
+	g = carregarGrafo(arquivo) # Para trocar o .dat lido, basta substituir 'grafo5.dat' aqui pelo novo .dat
+	randNodo = g.umVertice()
+	print "Nodo aleatorio:"
+	print randNodo
+	t1 = time.time()
+	d, caminho = g.dijkstra(g.umVertice())
+	t2 = time.time()
+	print "As distancias entre o nodo aleatorio e os outros nodos e:"
+	print d
+	print "Os caminhos entre o nodo aleatorio e os outros nodos:"
+	print caminho
+	print "O tempo para calcular dijkstra:"
+	print(t2-t1)
+	print ""
+	print ""
 
