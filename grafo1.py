@@ -28,7 +28,6 @@ class Grafo:
 				self.adicionaVertice(conexoes[x][y])
 			self.conecta(conexoes[x][0], conexoes[x][1], conexoes[x][2])
 
-
 	# Adiciona vertice, caso nao exista algum com mesmo nome
 	def adicionaVertice(self, v):
 		if not self.G.has_key(v):
@@ -152,124 +151,16 @@ class Grafo:
 		return False
 
 
-	# Calcula todos os caminhos e distancias entre cada vertice, usando e atualizando
-	# as matrizes de roteamento e distancias. (Algoritmo de Floyd extendido)
-	def extendedFloyd(self):
-		vert = self.vertices()
-		ordem = self.ordem()
-
-		# Gera a matriz de distancias (inicial) a partir das informacoes do grafo
-		self.dist  = [[self.distance(vert[y], vert[x]) for x in range(ordem)] for y in range(ordem)]
-
-		# Gera a matriz de roteamento (inicial) a partir das informacoes do grafo
-		self.nextV = [[self.vertex(vert[y], vert[x]) for x in range(ordem)] for y in range(ordem)]
-
-		# Atualiza as matrizes de distancia e roteamento ate elas possuirem as distancias/rotas
-		# minimas de cada vertice para cada outro vertice
-		for k in range(0, ordem):
-			for i in range(0, ordem):
-				for j in range(0, ordem):
-					if (self.dist[i][k] + self.dist[k][j]) < self.dist[i][j]:
-						self.dist[i][j] = self.dist[i][k] + self.dist[k][j]
-						self.nextV[i][j] = self.nextV[i][k]
-		return
-
-	# Gera pesos aleatorios para todas as arestas do grafo
-	def randPath(self):
-		for x in self.vertices():
-			for y in range(0, len(self.G[x])):
-				self.G[x][y][1] = self.G[x][y][1] * random.uniform(0.5, 1.5)
-		return
-
-	# Usado por extendedFloyd(). Busca a distancia entre dois vertices do grafo,
-	# para gerar matriz de distancia do Floyd extendido
-	def distance(self, v1, v2):
-		if v1 == v2:
-			return 0
-		for x in range(0, len(self.G[v1])):
-			if self.G[v1][x][0] == v2:
-				return self.G[v1][x][1]
-		return float("inf")
-
-	# Usada por extendedFloyd(). Retorna cada vertice adjacente a cada vertice
-	# do grafo. Usada para gerar a matriz de roteamento
-	def vertex(self, v1, v2):
-		if v1 == v2:
-			return v1
-		for x in range(0, len(self.G[v1])):
-			if self.G[v1][x][0] == v2:
-				return self.G[v1][x][0]
-		return 'NULL'
-
-	# Retorna o indice relativo ao vertice buscado no grafo
-	# (Usado pelo algoritmo de Floyd extendido)
-	def getIndex(self, v1):
-		vert = self.vertices()
-		for x in range(0, len(vert)):
-			if vert[x] == v1:
-				return x
-		
 
 
-	# Encontra o menor caminho entre o nodo1 e nodo2
-	def shortestPath(self, inicio, fim, caminho=[]):
-		caminho = caminho + [inicio]
-		if inicio == fim:
-			return caminho
-		if inicio not in self.G:
-			return None
-		menor = None
-		for nodo in self.adjacentes(inicio):
-			if nodo not in caminho:
-				novoCaminho = self.shortestPath(nodo, fim, caminho)
-				if novoCaminho:
-					if not menor or len(novoCaminho) < len(menor):
-						menor = novoCaminho
-		return menor
 
-	# Depth First Search, usa recursividade
-	def depthFirstSearch(self, inicio, caminho = []):
-		caminho = caminho + [inicio]
-		for nodo in self.adjacentes(inicio):
-			if not nodo in caminho:
-				caminho = self.depthFirstSearch(nodo, caminho)
-		return caminho
-
-	# Breadth First Search, iterativo
-	def breadthFirstSearch(self, inicio, caminho = []):
-		stack = [inicio]
-		while stack:
-			v = stack.pop(0)
-			if not v in caminho:
-				caminho = caminho + [v]
-				stack = stack + self.adjacentes(v)
-		return caminho
-
-	# Usa a matriz de distancias para determinar o hospital mais proximo da emergencia,
-	# e usa a matiz de rotas para determinar a rota desse caminho
-	def caminhoMinimoHospital(self, v):
-		distance = float('inf')
-		for x in range(len(self.hospital)):
-			if distance > self.dist[self.getIndex(self.hospital[x])][self.getIndex(v)]:
-				distance = self.dist[self.getIndex(self.hospital[x])][self.getIndex(v)]
-				hosp = self.getIndex(self.hospital[x])
-		path = self.getCaminho(hosp, v)
-		return distance, path
-
-	# Usada em caminhoMinimoHospital(). Usa a matriz de roteamento para obter o caminho do hospital mais proximo
-	# (ja obtido) ate a emergencia
-	def getCaminho(self, vA, vE):
-		path = [vA]
-		while (path[len(path)-1] != vE):
-			path.append(self.nextV[self.getIndex(path[len(path)-1])][self.getIndex(vE)])
-		return path
 
 	# Usado por dijkstra(). Retorna o vetor fornecido, ordenado.
-	def heapsort(self, vertices, n):
+	def heapsort(self, origem, vertices, n):
 		#for i in range(n//2, 1, -1):
 		i = (n//2)
 		while i >= 0 :
-			self.ajuste(vertices, i, n)
+			self.ajuste(origem, vertices, i, n)
 			#print vertices
 			i = i-1
 		#print vertices
@@ -279,18 +170,18 @@ class Grafo:
 			temp = vertices[i+1]
 			vertices[i+1] = vertices[0]
 			vertices[0] = temp
-			self.ajuste(vertices, 0, i)
+			self.ajuste(origem, vertices, 0, i)
 			i = i-1
 		return vertices
 
 	# Usado por heapsort(). Leva os maiores valores para cima (sift-up)
-	def ajuste(self, vertices, i, n):
+	def ajuste(self, origem, vertices, i, n):
 		aAux = vertices[i]
 		j = 2*i
 		while j <= n :
-			if j < n and vertices[j] < vertices[j+1]:
+			if j < n and self.pesoAresta(origem, vertices[j]) < self.pesoAresta(origem, vertices[j+1]):
 				j = j+1
-			if aAux >= vertices[j] :
+			if self.pesoAresta(origem, aAux) >= self.pesoAresta(origem, vertices[j]) :
 				return
 			vertices[j//2] = vertices[j]
 			vertices[j] = aAux
@@ -298,9 +189,12 @@ class Grafo:
 		vertices[j//2] = aAux
 
 	# Usado por dijkstra(). Retorna um vetor ordenado com heapsort
-	def extrairMinimo(self, Q):
-		return self.heapsort(Q, len(Q) - 1)[0] # Ordena os vertices por distancia e retorna o mais proximo
-		
+	def extrairMinimo(self, Q, origem):
+		return self.heapsort(origem, Q, len(Q) - 1)[0] # Ordena os vertices por distancia e retorna o mais proximo
+
+
+
+
 
 	# Usado por dijkstra(). Retorna o peso da aresta que conecta os vertices fornecidos
 	def pesoAresta(self, u, v):
@@ -310,7 +204,7 @@ class Grafo:
 		for i in range(0, len(adj)):
 			if self.G[u][i][0] == v :
 				return self.G[u][i][1]
-		return 99999999
+		return float('inf')
 
 	# Algoritmo de custo minimo de Dijkstra. Calcula os custos minimos de um vertice fornecido
 	# ate todos os outros vertices. Retorna uma lista com o vertice destino e o custo minimo ate ele
@@ -321,22 +215,25 @@ class Grafo:
 		
 		d = {} # Distancias da origem ate cada vertice
 
+		for i in range(0, self.ordem()):
+			#d[self.vertices()[i]] = self.pesoAresta(origem, self.vertices()[i])
+			d[self.vertices()[i]] = float('inf')
 		d[origem] = 0
 
-		for i in range(0, self.ordem()):
-			d[self.vertices()[i]] = self.pesoAresta(origem, self.vertices()[i])
-
 		print d
-		S = adjacentes # Vertices cuja distancia minima e conhecida
+		#S = adjacentes # Vertices cuja distancia minima e conhecida
+		S = []
 		print "Vertices com distancia conhecida: "
+		#S.append(origem)
 		print S #2
 
 		Q = list(set(self.vertices()) - set(S)) # Fila de prioridade composta por V (todos os vertices) - S
 		print "fila de prioridades dos vertices ainda sem peso nas arestas: "
 		print Q #3
+		### EXCLUIR origem DE Q????????????
 
 		while Q != [] :
-			u = self.extrairMinimo(Q)
+			u = self.extrairMinimo(Q, origem)
 			print "Minimo extraido (dos vertices ainda sem distancia calculada):"
 			print u #4
 			Q.remove(u)
@@ -344,14 +241,14 @@ class Grafo:
 			adjacentesU = self.adjacentes(u)
 			print "Adjacentes ao extraido: "
 			print adjacentesU #5
-			for i in range(0, len(adjacentesU)) :
-				v = adjacentesU[i]
+			for v in adjacentesU :
 				print 'adjacente escolhido'
 				print d[v]
 				pesoAresta = self.pesoAresta(u, v)
 				print d[u] + pesoAresta
-				if d[u] > d[v] + pesoAresta:
-					d[u] = d[v] + pesoAresta
+				if d[v] > d[u] + pesoAresta:
+					d[v] = d[u] + pesoAresta
+				print d[v]
 		return d
 
 # Gera o grafo a partir do arquivo .dat contendo as arestas
@@ -362,7 +259,7 @@ def carregarGrafo(arq):
 	return Grafo(arestas)
 
 
-g = carregarGrafo('grafo5.dat') # Para trocar o .dat lido, basta substituir 'grafo5.dat' aqui pelo novo .dat
+g = carregarGrafo('grafo7.dat') # Para trocar o .dat lido, basta substituir 'grafo5.dat' aqui pelo novo .dat
 
 #print g.G
 
