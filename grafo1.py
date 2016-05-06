@@ -190,7 +190,7 @@ class Grafo:
 
 	# Usado por dijkstra(). Retorna um vetor ordenado com heapsort
 	def extrairMinimo(self, Q, origem):
-		self.heapsort(origem, Q, len(Q) - 1) # Ordena os vertices por distancia e retorna o mais proximo
+		self.ajuste(origem, Q, (len(Q) - 1)//2, len(Q) - 1)
 		self.swap(Q)
 		return Q[len(Q) - 1]
 
@@ -230,6 +230,8 @@ class Grafo:
 		S = []
 
 		Q = list(set(self.vertices()) - set(S)) # Fila de prioridade composta por V (todos os vertices) - S
+		
+		self.heapsort(origem, Q, len(Q) - 1) # Ordena os vertices por distancia e retorna o mais proximo
 
 		# Itera enquanto ha elementos não visitados
 		while Q != [] :
@@ -259,13 +261,15 @@ def carregarGrafo(arq):
 
 
 arqGrafos = ['grafo5.dat', 'grafo20.dat', 'grafo50.dat', 'grafo100.dat', 'grafo200.dat', 'grafo500.dat']
+#arqGrafos = ['grafo5.dat']
 for arquivo in arqGrafos:
 	g = carregarGrafo(arquivo) # Para trocar o .dat lido, basta substituir 'grafo5.dat' aqui pelo novo .dat
 	randNodo = g.umVertice()
+	#randNodo = 3
 	print "Nodo aleatorio:"
 	print randNodo
 	t1 = time.time()
-	d, caminho = g.dijkstra(g.umVertice())
+	d, caminho = g.dijkstra(randNodo)
 	t2 = time.time()
 	print "As distancias entre o nodo aleatorio e os outros nodos e:"
 	print d
