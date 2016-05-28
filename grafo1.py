@@ -1,5 +1,6 @@
 import random
 import time
+import sys
 
 class Grafo:
 
@@ -73,8 +74,6 @@ class Grafo:
 	def grau(self, v):
 		return len(self.G[v])
 
-
-
 	# Verifica se todos os vertices do grafo possuem o mesmo grau
 	def eRegular(self):
 		_grau = self.grau(self.G.keys()[0])
@@ -117,6 +116,15 @@ class Grafo:
 		alcancaveis = self.fechoTransitivo(self.umVertice())
 		return self.equals(vertices, alcancaveis)
 
+	# Usado por eConexo(), verifica se duas listas possuem os mesmos elementos (iguais, porem nao
+	# necessariamente na mesma ordem)
+	def equals(self, conj1, conj2):
+		for x in conj1:
+			for y in conj2:
+				if x not in conj2 or y not in conj1:
+					return False
+		return True
+
 	# Verifica se o grafo e uma arvore, ou seja, se nao possue ciclos se e conexo
 	def eArvore(self):
 		v = self.umVertice()
@@ -134,31 +142,13 @@ class Grafo:
 		jaVisitados.remove(v)
 		return False
 
-
-
-	# Encontra o menor caminho entre o nodo1 e nodo2
-	def shortestPath(self, inicio, fim, caminho=[]):
-		caminho = caminho + [inicio]
-		if inicio == fim:
-			return caminho
-		if inicio not in self.G:
-			return None
-		menor = None
-		for nodo in self.adjacentes(inicio):
-			if nodo not in caminho:
-				novoCaminho = self.shortestPath(nodo, fim, caminho)
-				if novoCaminho:
-					if not menor or len(novoCaminho) < len(menor):
-						menor = novoCaminho
-		return menor
-
 	# Depth First Search, usa recursividade
-	def depthFirstSearch(self, inicio, caminho = []):
-		caminho = caminho + [inicio]
+	def depthFirstSearch(self, inicio, percorridos = []):
+		percorridos = percorridos + [inicio]
 		for nodo in self.adjacentes(inicio):
-			if not nodo in caminho:
-				caminho = self.depthFirstSearch(nodo, caminho)
-		return caminho
+			if not nodo in percorridos:
+				percorridos = self.depthFirstSearch(nodo, percorridos)
+		return percorridos
 
 	# Breadth First Search, iterativo
 	def breadthFirstSearch(self, inicio, caminho = []):
@@ -170,52 +160,43 @@ class Grafo:
 				stack = stack + self.adjacentes(v)
 		return caminho
 
-	# Usado por eConexo(), verifica se duas listas possuem os mesmos elementos (iguais, porem nao
-	# necessariamente na mesma ordem)
-	def equals(self, conj1, conj2):
-		for x in conj1:
-			for y in conj2:
-				if x not in conj2 or y not in conj1:
-					return False
-		return True
 
-t1 = time.time()
+# Gera o grafo a partir do arquivo .dat contendo as arestas
+def carregarGrafo(arq):
+	exec open(arq).read()
+	length = len(arestas)
+	return Grafo(arestas)
 
-arq = open('grafo.dat')
-texto = arq.read()
-exec texto
-
-g = Grafo(conexoes)
-#g = Grafo()
-
-print g.G
-
-t2 = time.time()
-
-print(t2-t1)
-
-#g = Grafo()
-#g.adicionaVertice("A")
-#g.adicionaVertice("B")
-#g.conecta("A", "B", 10)
-#g.adicionaVertice("C")
-#g.conecta("B", "C", 2)
-#g.conecta("C", "A", 5)
-#print g.G
-
-
-#print "Adjacentes ao vertice A: "
-#print g.adjacentes("A")
-#g.desconecta("A", "B", 10)
-#print g.G
-#print g.vertices()
-#print g.umVertice()
-#print g.grau("B")
-
-
-
-#print g.eRegular()
-#g.desconecta("A", "C", 5)
-#print g.G
-#print g.eRegular()
-
+arqGrafos = ['grafo5.dat', 'grafo20.dat', 'grafo50.dat', 'grafo100.dat', 'grafo200.dat', 'grafo500.dat']
+#arqGrafos = ['grafo5.dat']
+defaultStream = sys.stdout
+sys.stdout = open('resp.txt', 'w')
+for arquivo in arqGrafos:
+	g = carregarGrafo(arquivo) # Para trocar o .dat lido, basta substituir 'grafo5.dat' aqui pelo novo .dat
+	randNodo = g.umVertice()   # Escolhe um vertice aleatorio para iniciar as buscas
+	#randNodo = 0
+	print "arquivo .dat: {1}     ---    Nodo inicial: {0:3d}".format(randNodo, arquivo)
+	print 
+	print ""
+	print "Para busca em profundidade:"
+	t1 = time.time()
+	caminho = g.depthFirstSearch(randNodo)
+	t2 = time.time()
+	print "O ordem dos vertices percorridos:"
+	print caminho
+	print "Tempo gasto para percorrer todos os vertices"
+	print(t2-t1)
+	print ""
+	print "Para busca em largura:"
+	t1 = time.time()
+	caminho = g.breadthFirstSearch(randNodo)
+	t2 = time.time()
+	print "O ordem dos vertices percorridos:"
+	print caminho
+	print "Tempo gasto para percorrer todos os vertices"
+	print(t2-t1)
+	print ""
+	print ""
+sys.stdout.close()
+sys.stdout = defaultStream
+print "Feito! Respostas no arquivo resp.txt"
